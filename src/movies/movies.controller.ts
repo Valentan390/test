@@ -15,7 +15,6 @@ import {
 } from '@nestjs/common';
 import { MoviesService } from './movies.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
-import { GetIdDto } from './dto/get-IdDto';
 import { UpserMovieDto } from './dto/upser- movie.dto';
 import { ParsePaginationInterceptor } from './interceptorMovies/ParsePagination.interceptor';
 import { ParseSortParamsInterceptor } from './interceptorMovies/parseSortParams.interceptor';
@@ -23,6 +22,8 @@ import { sortByListMovie } from 'src/constans/movies';
 import { QueryMoviesDto } from './dto/query.movies.dto';
 import { parseMoviesFilter } from 'src/utils/parseMoviesFilter';
 import { IAuthenticatedRequest, IFilter } from 'src/types/interfase';
+import { ValidateObjectIdPipe } from 'src/common/pipes/validateObjectId.pipes';
+import { ObjectId } from 'mongoose';
 
 @Controller('movies')
 export class MoviesController {
@@ -74,10 +75,10 @@ export class MoviesController {
   @Get(':id')
   async getMovieById(
     @Req() req: IAuthenticatedRequest,
-    @Param() params: GetIdDto,
+    @Param('id', new ValidateObjectIdPipe()) id: ObjectId,
   ) {
     const { _id: userId } = req.user;
-    const { id } = params;
+
     const data = await this.moviesService.getMovie({ _id: id, userId });
 
     if (!data) {
@@ -94,11 +95,11 @@ export class MoviesController {
   @Put(':id')
   async upsertMovie(
     @Req() req: IAuthenticatedRequest,
-    @Param() params: GetIdDto,
+    @Param('id', new ValidateObjectIdPipe()) id: ObjectId,
     @Body() upserMovieDto: UpserMovieDto,
   ) {
     const { _id: userId } = req.user;
-    const { id } = params;
+
     const { data, isNew } = await this.moviesService.updateMovie(
       { _id: id, userId },
       { ...upserMovieDto, userId },
@@ -114,11 +115,11 @@ export class MoviesController {
   @Patch(':id')
   async patchMovie(
     @Req() req: IAuthenticatedRequest,
-    @Param() params: GetIdDto,
+    @Param('id', new ValidateObjectIdPipe()) id: ObjectId,
     @Body() patchMovieDto: UpserMovieDto,
   ) {
     const { _id: userId } = req.user;
-    const { id } = params;
+
     const result = await this.moviesService.updateMovie(
       { _id: id, userId },
       patchMovieDto,
@@ -138,10 +139,10 @@ export class MoviesController {
   @Delete(':id')
   async deleteMovie(
     @Req() req: IAuthenticatedRequest,
-    @Param() params: GetIdDto,
+    @Param('id', new ValidateObjectIdPipe()) id: ObjectId,
   ) {
     const { _id: userId } = req.user;
-    const { id } = params;
+
     const result = await this.moviesService.deleteMovie({ _id: id, userId });
 
     if (!result) {
