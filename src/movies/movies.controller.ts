@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -11,6 +12,7 @@ import {
   Put,
   Query,
   Req,
+  UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { MoviesService } from './movies.service';
@@ -24,10 +26,18 @@ import { parseMoviesFilter } from 'src/utils/parseMoviesFilter';
 import { IAuthenticatedRequest, IFilter } from 'src/types/interfase';
 import { ValidateObjectIdPipe } from 'src/common/pipes/validateObjectId.pipes';
 import { ObjectId } from 'mongoose';
+import { CloudinaryService } from 'src/modules/cloudinary/cloudinary.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('movies')
 export class MoviesController {
-  constructor(private moviesService: MoviesService) {}
+  private readonly enableCloudinary: boolean;
+  constructor(
+    private moviesService: MoviesService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {
+    this.enableCloudinary = process.env.ENABLE_CLOUDINARY === 'true';
+  }
 
   @Get()
   @UseInterceptors(ParsePaginationInterceptor)
@@ -55,16 +65,42 @@ export class MoviesController {
     };
   }
 
+  @UseInterceptors(FileInterceptor('poster'))
   @Post()
   async addMovie(
     @Req() req: IAuthenticatedRequest,
     @Body() createMovieDto: CreateMovieDto,
+    @UploadedFile() file: Express.Multer.File,
   ) {
     const { _id: userId } = req.user;
+
+    const { title } = createMovieDto;
+
+    const movie = await this.moviesService.getMovie({ userId, title });
+
+    if (movie) {
+      throw new BadRequestException(
+        `Movie with title - ${title} already exists.`,
+      );
+    }
+
+    let poster = '';
+
+    if (file) {
+      if (this.enableCloudinary) {
+        poster = await this.cloudinaryService.uploadFile(file, 'poster');
+      } else {
+        // await saveFileToUploadsDir(file, 'posters');
+        // poster = path.join('posters', file.filename);
+      }
+    }
+
     const data = await this.moviesService.addMovie({
       ...createMovieDto,
+      poster,
       userId,
     });
+
     return {
       status: HttpStatus.CREATED,
       message: 'Movie created successfully',

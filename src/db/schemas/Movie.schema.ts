@@ -23,6 +23,9 @@ export class Movie {
   @Prop({ type: Number, match: releaseYearRegexp })
   releaseYear: number;
 
+  @Prop({ type: String })
+  poster?: string;
+
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

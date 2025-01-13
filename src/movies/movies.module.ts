@@ -6,6 +6,9 @@ import { MoviesService } from './movies.service';
 import { handleSaveError, setUpdateSettings } from 'src/db/hooks';
 import { AuthMiddleware } from 'src/common/middleware/authenticate.middleware';
 import { UsersModule } from 'src/users/users.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { multerConfig } from 'src/common/multer.config';
+import { CloudinaryModule } from 'src/modules/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -22,6 +25,8 @@ import { UsersModule } from 'src/users/users.module';
       },
     ]),
     UsersModule,
+    MulterModule.register(multerConfig),
+    CloudinaryModule,
   ],
   controllers: [MoviesController],
   providers: [MoviesService],
