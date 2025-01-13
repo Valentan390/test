@@ -52,11 +52,7 @@ export class UsersService {
 
     const appDomain = process.env.APP_DOMAIN;
 
-    console.log('appDomain:  ', appDomain);
-
     const token = await this.jwtService.signAsync({ email });
-
-    console.log('token:  ', token);
 
     const html = template({
       username: newUser.username,
