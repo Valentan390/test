@@ -15,6 +15,7 @@ import { TEMPLATES_DIR } from 'src/constans';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import Handlebars from 'handlebars';
+import { sendEmail } from 'src/utils/sendEmail';
 
 @Injectable()
 export class UsersService {
@@ -60,6 +61,8 @@ export class UsersService {
       subject: 'Підтверження email',
       html,
     };
+
+    await sendEmail(verifyEmail);
 
     return newUser;
   }
