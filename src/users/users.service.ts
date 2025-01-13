@@ -16,7 +16,8 @@ import { TEMPLATES_DIR } from 'src/constans';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import Handlebars from 'handlebars';
-import { sendEmail } from 'src/utils/sendEmail';
+
+import { MailService } from 'src/modules/mail/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -24,6 +25,7 @@ export class UsersService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Session.name) private sessionModel: Model<Session>,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async register(payload: IPayload): Promise<UserDocument> {
@@ -50,7 +52,7 @@ export class UsersService {
 
     const appDomain = process.env.APP_DOMAIN;
 
-    const token = await this.jwtService.signAsync(email);
+    const token = await this.jwtService.signAsync({ email });
 
     const html = template({
       username: newUser.username,
@@ -63,19 +65,17 @@ export class UsersService {
       html,
     };
 
-    await sendEmail(verifyEmail);
+    await this.mailService.sendEmail(verifyEmail);
 
     return newUser;
   }
 
   async verify(token: string) {
-    const { data, error } = await this.jwtService.verifyAsync(token);
+    const { email, error } = await this.jwtService.verifyAsync(token);
 
     if (error) {
       throw new UnauthorizedException(error.message);
     }
-
-    const { email } = data;
 
     const user = await this.userModel.findOne({ email });
 

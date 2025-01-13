@@ -10,9 +10,11 @@ import {
   SessionSchema,
 } from 'src/db/schemas/Session.schema';
 import { JwtModule } from '@nestjs/jwt';
+import { MailModule } from 'src/modules/mail/mail.module';
 
 @Module({
   imports: [
+    MailModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET || 'default_secret',
