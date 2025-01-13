@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
-import * as morgan from 'morgan';
 import * as cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './exception.filter/http-exception.filter';
 import { startRequestInterval } from './utils/startRequestInterval';
@@ -19,7 +18,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  app.use(morgan('combined'));
+
   app.use(cookieParser());
   const port = process.env.PORT || 3333;
 
