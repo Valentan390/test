@@ -84,7 +84,7 @@ export class UsersService {
     }
 
     if (user.verify) {
-      throw new NotFoundException('User already verified');
+      throw new ConflictException('User already verified');
     }
 
     await this.userModel.findOneAndUpdate({ _id: user._id }, { verify: true });
