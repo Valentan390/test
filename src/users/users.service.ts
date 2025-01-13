@@ -10,12 +10,18 @@ import { User, UserDocument } from 'src/db/schemas/User.schema';
 import * as bcrypt from 'bcrypt';
 import { createSession } from 'src/utils/createSession';
 import { IPayload, IRefreshSession } from 'src/types/interfase';
+import { JwtService } from '@nestjs/jwt';
+import { TEMPLATES_DIR } from 'src/constans';
+import { join } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import Handlebars from 'handlebars';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Session.name) private sessionModel: Model<Session>,
+    private jwtService: JwtService,
   ) {}
 
   async register(payload: IPayload): Promise<UserDocument> {
@@ -29,7 +35,33 @@ export class UsersService {
 
     const hashPassword = await bcrypt.hash(password, 10);
 
-    return await this.userModel.create({ ...payload, password: hashPassword });
+    const newUser = await this.userModel.create({
+      ...payload,
+      password: hashPassword,
+    });
+
+    const verifyEmailTemplatePath = join(TEMPLATES_DIR, 'verify-email.html');
+
+    const templateSource = await readFile(verifyEmailTemplatePath, 'utf-8');
+
+    const template = Handlebars.compile(templateSource);
+
+    const appDomain = process.env.APP_DOMAIN;
+
+    const token = await this.jwtService.signAsync(email);
+
+    const html = template({
+      username: newUser.username,
+      link: `${appDomain}/auth/verify?token=${token}`,
+    });
+
+    const verifyEmail = {
+      to: email,
+      subject: 'Підтверження email',
+      html,
+    };
+
+    return newUser;
   }
 
   async login(payload: IPayload): Promise<SessionDocument> {

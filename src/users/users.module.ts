@@ -9,9 +9,15 @@ import {
   SessionDocument,
   SessionSchema,
 } from 'src/db/schemas/Session.schema';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET || 'default_secret',
+      signOptions: { expiresIn: '24h' },
+    }),
     MongooseModule.forFeatureAsync([
       {
         name: User.name,
