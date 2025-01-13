@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -67,6 +68,28 @@ export class UsersService {
     return newUser;
   }
 
+  async verify(token: string) {
+    const { data, error } = await this.jwtService.verifyAsync(token);
+
+    if (error) {
+      throw new UnauthorizedException(error.message);
+    }
+
+    const { email } = data;
+
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.verify) {
+      throw new NotFoundException('User already verified');
+    }
+
+    await this.userModel.findOneAndUpdate({ _id: user._id }, { verify: true });
+  }
+
   async login(payload: IPayload): Promise<SessionDocument> {
     const { email, password } = payload;
 
@@ -74,6 +97,10 @@ export class UsersService {
 
     if (!user) {
       throw new UnauthorizedException('Email or password invalid');
+    }
+
+    if (!user.verify) {
+      throw new UnauthorizedException('Email not verify');
     }
 
     const passwordCompare = await bcrypt.compare(password, user.password);
